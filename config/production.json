@@ -1,5 +1,8 @@
 {
   "isDev": true,
+  "redis": {
+    "url": "redis://localhost:6379"
+  },
   "server": {
     "port": 8888
   },

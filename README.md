@@ -31,6 +31,17 @@ Running the server requires a valid installation of node.js which can be install
 
 						{"code":0,"message":"Transport unknown"}
 
+
+## Using multiple nodes
+
+Edit `config/production.json`, add redis configuration:
+
+```
+"redis": {
+  "url": "redis://localhost:6379"
+}
+```
+
 ### Production Environment
 * generate your ssl certs
 
