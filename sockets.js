@@ -12,9 +12,15 @@ function getRedisAdapter(config) {
 }
 
 module.exports = function (server, config) {
-  var io = socketIO.listen(server);
-  if (config.redis) {
+  let io;
+  if (config.cluster) {
+    io = socketIO(server);
     io.adapter(getRedisAdapter(config));
+  } else {
+    io = socketIO.listen(server);
+    if (config.redis) {
+      io.adapter(getRedisAdapter(config));
+    }
   }
 
   io.sockets.on('connection', function (client) {
@@ -152,6 +158,7 @@ module.exports = function (server, config) {
     return io.sockets.clients(name).length;
   }
 
+  return io;
 };
 
 function safeCb(cb) {
