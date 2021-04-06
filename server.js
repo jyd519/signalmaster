@@ -5,6 +5,7 @@ const yetify = require('yetify'),
   sockets = require('./sockets');
 
 const port = parseInt(process.env.PORT || config.server.port, 10);
+
 const server_handler = function (req, res) {
   if (req.url === '/healthcheck') {
     console.log(Date.now(), 'healthcheck');
@@ -30,7 +31,6 @@ if (config.server.secure) {
 }
 
 server.listen(port);
-
 sockets(server, config);
 
 if (config.uid) process.setuid(config.uid);

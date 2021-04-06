@@ -11,6 +11,17 @@ function getRedisAdapter(config) {
   return redisAdapter(config.redis)
 }
 
+function redisAdapterFactory(config) {
+  const adapter = getRedisAdapter(config);
+  adapter.pubClient.on('error', function(e){
+    console.error('redisAdapter.pubClient error:', e);
+  });
+  adapter.subClient.on('error', function(e){
+    console.error('redisAdapter.subClient error:', e);
+  });
+  return adapter;
+}
+
 module.exports = function (server, config) {
   let io;
   if (config.cluster) {
@@ -19,7 +30,7 @@ module.exports = function (server, config) {
   } else {
     io = socketIO.listen(server);
     if (config.redis) {
-      io.adapter(getRedisAdapter(config));
+      io.adapter(redisAdapterFactory(config));
     }
   }
 
@@ -157,8 +168,6 @@ module.exports = function (server, config) {
   function clientsInRoom(name) {
     return io.sockets.clients(name).length;
   }
-
-  return io;
 };
 
 function safeCb(cb) {
