@@ -6,7 +6,6 @@ const yetify = require('yetify'),
   farmhash = require('farmhash');
 
 const cluster = require("cluster");
-const http = require("http");
 
 const numCPUs = require("os").cpus().length;
 const port = parseInt(process.env.PORT || config.server.port, 10);
@@ -47,15 +46,26 @@ if (cluster.isMaster) {
 		return farmhash.fingerprint32(ip) % len; 
 	};
 
-	// Create the outside facing server listening on our port.
-	var server = net.createServer({ pauseOnConnect: true }, function(connection) {
+  let server;
+  if (config.server.secure) {
+    server = require('https').Server({
+      key: fs.readFileSync(config.server.key),
+      cert: fs.readFileSync(config.server.cert),
+      passphrase: config.server.password
+    }, server_handler);
+  } else {
+    server = require('http').Server(server_handler);
+  }
+
+  server.on('connection', function(connection) {
 		// We received a connection and need to pass it to the appropriate
 		// worker. Get the worker for this connection's source IP and pass
 		// it the connection.
+    connection.pause();
     console.log(connection.remoteAddress, connection.remotePort);
-		var worker = workers[worker_index(connection.remoteAddress || '11', numCPUs)];
-		worker.send('sticky-session:connection', connection);
-	}).listen(port);
+    var worker = workers[worker_index(connection.remoteAddress || '127.0.0.1', numCPUs)];
+    worker.send('sticky-session:connection', connection);
+  });
 
   let httpUrl;
   if (config.server.secure) {
@@ -64,11 +74,24 @@ if (cluster.isMaster) {
     httpUrl = "http://localhost:" + port;
   }
 
+  server.listen(port);
+
   console.log(yetify.logo() + ' -- signal master is running at: ' + httpUrl);
 } else {
   console.log(`Worker ${process.pid} started`);
+
   config.cluster = true;
-  const httpServer = http.createServer(server_handler);
+  let server;
+  if (config.server.secure) {
+    server = require('https').Server({
+      key: fs.readFileSync(config.server.key),
+      cert: fs.readFileSync(config.server.cert),
+      passphrase: config.server.password
+    }, server_handler);
+  } else {
+    server = require('http').Server(server_handler);
+  }
+  const httpServer = server;
   const io = sockets(httpServer, config);
   httpServer.listen(0, 'localhost');
 
