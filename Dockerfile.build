@@ -1,0 +1,17 @@
+FROM node:12-alpine as builder
+
+RUN apk update && apk add make g++ python
+
+WORKDIR /app
+COPY . ./
+RUN LDFLAGS='-static-libgcc -static-libstdc++' npm install --production
+
+
+FROM node:12-alpine
+
+WORKDIR /app
+
+COPY --from=builder /app /app
+
+ENV NODE_ENV production
+CMD ["node", "cluster.js"]

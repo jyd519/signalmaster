@@ -26,7 +26,8 @@
 
     <script src="/node_modules/socket.io-client/dist/socket.io.js"></script>
     <script>
-      var socket = io("http://127.0.0.1:9888", {transports: ['websocket']});
+      // var socket = io("http://127.0.0.1:9888", {transports: ['websocket']});
+      var socket = io("http://127.0.0.1:9888");
       const $events = document.getElementById('events');
 
       const log = (content) => {

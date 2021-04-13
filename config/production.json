@@ -12,7 +12,6 @@
   },
   "stunservers": [
     {
-      "urls": "$STUNSERVER_URL"
     }
   ],
   "turnservers": []
