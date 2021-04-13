@@ -49,6 +49,7 @@ module.exports = function (server, config) {
       if (!otherClient) return;
 
       details.from = client.id;
+      details.pid = process.pid;
       otherClient.emit('message', details);
     });
 
@@ -168,6 +169,8 @@ module.exports = function (server, config) {
   function clientsInRoom(name) {
     return io.sockets.clients(name).length;
   }
+
+  return io;
 };
 
 function safeCb(cb) {
