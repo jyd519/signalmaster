@@ -59,23 +59,9 @@ module.exports = function (server, config) {
 
     client.on('unshareScreen', function (type) {
       client.resources.screen = false;
-      removeFeed('screen');
     });
 
     client.on('join', join);
-
-    function removeFeed(type) {
-      if (client.room) {
-        io.sockets.in(client.room).emit('remove', {
-          id: client.id,
-          type: type
-        });
-        if (!type) {
-          client.leave(client.room);
-          client.room = undefined;
-        }
-      }
-    }
 
     function join(name, cb) {
       // sanity check
@@ -84,22 +70,31 @@ module.exports = function (server, config) {
       if (config.rooms && config.rooms.maxClients > 0 &&
           clientsInRoom(name) >= config.rooms.maxClients) {
         safeCb(cb)('full');
-      return;
+        return;
       }
-      // leave any existing rooms
-      removeFeed();
-      safeCb(cb)(null, describeRoom(name));
+
+      if (cb) {
+        safeCb(cb)(null, describeRoom(name));
+      }
+
       client.join(name);
-      client.room = name;
     }
 
-    // we don't want to pass "leave" directly because the
-    // event type string of "socket end" gets passed too.
     client.on('disconnect', function () {
-      removeFeed();
     });
-    client.on('leave', function () {
-      removeFeed();
+
+    client.on('listroom', function(name, cb) {
+      if (name && cb) {
+        safeCb(cb)(name, describeRoom(name));
+      }
+    });
+
+    client.on('leave', function (room) {
+      if (room) {
+        client.leave(room);
+      } else {
+        client.leaveAll();
+      }
     });
 
     client.on('create', function (name, cb) {
@@ -152,7 +147,6 @@ module.exports = function (server, config) {
     }
     client.emit('turnservers', credentials);
   });
-
 
   function describeRoom(name) {
     var adapter = io.nsps['/'].adapter;
